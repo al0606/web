@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectRootManager">
+    <output url="file://$PROJECT_DIR$/out" />
+  </component>
+  <component name="SaveActionSettings">
+    <option name="actions">
+      <set>
+        <option value="activate" />
+        <option value="organizeImports" />
+        <option value="reformatChangedCode" />
+      </set>
+    </option>
+    <option name="configurationPath" value="" />
+    <option name="inclusions">
+      <set>
+        <option value=".*\.java" />
+        <option value=".*\.xml" />
+        <option value=".*\.yml" />
+      </set>
+    </option>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <created>1686898631102</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1686898631102</updated>
+    </task>
+    <servers />
+  </component>
+</project>
