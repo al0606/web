@@ -66,3 +66,15 @@ export function collectList (parameter) {
     params: parameter
   })
 }
+
+/**
+ * 查询商品
+ * @param collectId
+ * @returns {*}
+ */
+export function getGoodsList (collectId) {
+  return request({
+    url: `${api.collect}/goods/${collectId}`,
+    method: 'get'
+  })
+}

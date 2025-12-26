@@ -61,7 +61,12 @@
         <a-button-group>
           <a-button type="primary" icon="sync" @click="handleSyncAll" :loading="syncLoading">一键同步</a-button>
           <a-popover :title="false" @visibleChange="(flag) => flag ? queryBox(null) : null" trigger="click">
-            <a-button type="primary" icon="down" />
+            <a-tooltip placement="top">
+              <template slot="title">
+                <span>同步箱子</span>
+              </template>
+              <a-button type="primary" icon="down" />
+            </a-tooltip>
             <template slot="content">
               <a-form layout="inline">
                 <a-form-item>
@@ -75,6 +80,7 @@
                 <a-badge status="error" text="未同步" />
               </a-form>
               <a-table
+                  ref="boxTable"
                   :columns="boxColumns"
                   :data-source="boxList"
                   :scroll="{  x: 450, y: 240 }"
@@ -90,7 +96,7 @@
                 </span>
                 <span slot="action" slot-scope="text, record">
                   <template>
-                    <a @click="handleSyncBox(record)">同步</a>
+                    <a @click="handleSyncBox(record.id)">同步</a>
                   </template>
                 </span>
               </a-table>
@@ -120,6 +126,8 @@
         showPagination="auto"
         :loading="loading"
         :showAlertInfo="true"
+        :expandRowByClick="true"
+        @expand="handleExpand"
       >
         <span slot="levelName" slot-scope="text, record">
           <a-badge
@@ -146,11 +154,59 @@
                           record.wearType === 4 ? 'pink' : 'red'"
           >{{ text }}</a-tag>
         </span>
-        <span slot="action" slot-scope="text, record">
-          <template>
-            <a @click="handleSub(record)">订阅报警</a>
-          </template>
+        <span slot="minPrice" slot-scope="text">
+          <span style="color: #87d068;">￥{{ text }}</span>
         </span>
+        <span slot="action" slot-scope="text, record">
+          <a-tooltip placement="top">
+            <template slot="title">
+              <span>同步数据</span>
+            </template>
+            <a-icon type="sync" :style="{ color: '#108ee9' }" @click="handleSyncBox(record.boxId)" />
+          </a-tooltip>
+        </span>
+        <a-table
+            slot="expandedRowRender"
+            slot-scope="pText"
+            key="goodsId"
+            :columns="innerColumns"
+            :data-source="pText.innerData"
+            :pagination="false"
+            :loading="innerLoading"
+        >
+          <span slot="wtName" slot-scope="text, record">
+            <a-tag
+                :color="record.wearType === 1 ? 'cyan' :
+                            record.wearType === 2 ? 'green' :
+                            record.wearType === 3 ? 'orange' :
+                            record.wearType === 4 ? 'pink' : 'red'"
+            >{{ text }}</a-tag>
+          </span>
+          <span slot="minWear" slot-scope="text, record">
+            <span style="font-weight: bold;">{{ text }}</span>
+            <span
+                style="font-size: 12px;"
+                v-if="text !== record.realMinimumWear"
+            > | {{ record.realMinimumWear }}</span>
+          </span>
+          <span slot="maxWear" slot-scope="text, record">
+            <span style="font-weight: bold;">{{ text }}</span>
+            <span
+                style="font-size: 12px;"
+                v-if="text !== record.realMaximumWear"
+            > | {{ record.realMaximumWear }}</span>
+          </span>
+          <span slot="mPrice" slot-scope="text">
+            <span :style="{ color: pText.minPrice === text ? '#87d068' : ''}">￥{{ text }}</span>
+          </span>
+          <span slot="buffPrice" slot-scope="text">
+            <span style="font-weight: bold;">￥{{ text }} </span>
+          </span>
+          <span slot="steamPrice" slot-scope="text, record">
+            <span style="font-weight: bold;">￥{{ record.stprice }} </span>
+            <span style="font-size: 12px; text-decoration: line-through;">￥{{ text }} </span>
+          </span>
+        </a-table>
       </s-table>
     </a-card>
   </page-header-wrapper>
@@ -159,17 +215,16 @@
 <script>
 import moment from 'moment'
 import { STable, Ellipsis } from '@/components'
-import { getRoleList } from '@/api/manage'
-import { queryBox, syncBox, syncAll, collect, collectList } from '@/api/sync'
+import { queryBox, syncBox, syncAll, collect, collectList, getGoodsList } from '@/api/sync'
 
 const columns = [
   { title: '箱子名称', dataIndex: 'boxName' },
   { title: '等级', dataIndex: 'levelName', scopedSlots: { customRender: 'levelName' } },
   { title: '类型', dataIndex: 'typeName', scopedSlots: { customRender: 'typeName' } },
   { title: '磨损类型', dataIndex: 'wearTypeName', scopedSlots: { customRender: 'wearTypeName' } },
-  { title: '最大磨损', dataIndex: 'maximumWear' },
   { title: '最小磨损', dataIndex: 'minimumWear' },
-  { title: '最低价格', dataIndex: 'minPrice' },
+  { title: '最大磨损', dataIndex: 'maximumWear' },
+  { title: '最低价格', dataIndex: 'minPrice', scopedSlots: { customRender: 'minPrice' } },
   {
     title: '操作',
     dataIndex: 'action',
@@ -203,6 +258,19 @@ export default {
       boxLoading: false,
       syncLoading: false,
       collectLoading: false,
+      innerColumns: [
+        { title: '名称',
+          dataIndex: 'goodsName',
+          width: '200px'
+        },
+        { title: '磨损类型', dataIndex: 'wearTypeName', scopedSlots: { customRender: 'wtName' } },
+        { title: '最小磨损', dataIndex: 'minimumWear', scopedSlots: { customRender: 'minWear' } },
+        { title: '最大磨损', dataIndex: 'maximumWear', scopedSlots: { customRender: 'maxWear' } },
+        { title: 'BUFF价格', dataIndex: 'buffPrice', scopedSlots: { customRender: 'buffPrice' } },
+        { title: 'STEAM价格', dataIndex: 'steamPrice', scopedSlots: { customRender: 'steamPrice' } },
+        { title: '最低价格', dataIndex: 'minPrice', scopedSlots: { customRender: 'mPrice' } }
+      ],
+      innerLoading: false,
       // 查询参数
       queryParam: {
         type: '1'
@@ -211,13 +279,9 @@ export default {
       loadData: parameter => this.doLoadData(parameter)
     }
   },
-  created () {
-    getRoleList({ t: new Date() })
-  },
   methods: {
     doLoadData (parameter) {
       this.loading = true
-      console.log(parameter)
       const requestParameters = Object.assign({}, parameter, this.queryParam)
       return collectList(requestParameters)
           .then(res => {
@@ -244,9 +308,9 @@ export default {
       })
     },
     // 同步单个箱子
-    handleSyncBox (record) {
+    handleSyncBox (boxId) {
       this.boxLoading = true
-      syncBox(record.id).then(res => {
+      syncBox(boxId).then(res => {
         this.$message.info('已发送同步请求')
       }).finally(() => {
         this.boxLoading = false
@@ -268,6 +332,16 @@ export default {
         this.$message.info('已发送汇总请求')
       }).finally(() => {
         this.collectLoading = false
+      })
+    },
+    // 展开/收起商品详情
+    handleExpand (e, record) {
+      if (!e) return
+      this.innerLoading = true
+      getGoodsList(record.id).then(res => {
+        this.$set(record, 'innerData', res)
+      }).finally(() => {
+        this.innerLoading = false
       })
     },
     handleSub (record) {
