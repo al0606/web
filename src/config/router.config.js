@@ -18,7 +18,7 @@ export const asyncRouterMap = [
       {
         path: '/sync',
         name: 'sync',
-        component: () => import('@/views/list/TableList'),
+        component: () => import('@/views/sync/List'),
         meta: { title: '同步数据', icon: 'sync', permission: ['table'] }
       }
       // dashboard
