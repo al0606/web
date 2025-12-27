@@ -72,9 +72,10 @@ export function collectList (parameter) {
  * @param collectId
  * @returns {*}
  */
-export function getGoodsList (collectId) {
+export function getGoodsList (parameter) {
   return request({
-    url: `${api.collect}/goods/${collectId}`,
-    method: 'get'
+    url: `${api.collect}/goods`,
+    method: 'get',
+    params: parameter
   })
 }

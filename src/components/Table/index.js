@@ -145,8 +145,8 @@ export default {
 
       this.localLoading = true
       const parameter = Object.assign({
-        page: (pagination && pagination.current) ||
-          this.showPagination && this.localPagination.current || this.pageNum,
+        page: ((pagination && pagination.current) ||
+          this.showPagination && this.localPagination.current || this.pageNum) - 1,
         size: (pagination && pagination.pageSize) ||
           this.showPagination && this.localPagination.pageSize || this.pageSize
       },

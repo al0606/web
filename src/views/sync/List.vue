@@ -42,6 +42,11 @@
                   </a-select>
                 </a-form-item>
               </a-col>
+              <a-col :md="6" :sm="24">
+                <a-form-item label="最低价格">
+                  <a-input v-model="queryParam.minPrice" placeholder="请输入最低价格"/>
+                </a-form-item>
+              </a-col>
             </template>
             <a-col :md="!advanced && 6 || 24" :sm="24">
               <span class="table-page-search-submitButtons" :style="advanced && { float: 'right', overflow: 'hidden' } || {} ">
@@ -129,6 +134,17 @@
         :expandRowByClick="true"
         @expand="handleExpand"
       >
+        <span slot="boxName" slot-scope="text, record">
+          {{ text }}
+          <a-badge
+            :count="record.count"
+            :number-style="{
+              backgroundColor: '#e6fffb',
+              color: '#13c2c2',
+              boxShadow: '0 0 0 1px #87e8de inset',
+            }"
+          />
+        </span>
         <span slot="levelName" slot-scope="text, record">
           <a-badge
               :color="record.level === 1 ? '#b0c3d9' :
@@ -155,7 +171,7 @@
           >{{ text }}</a-tag>
         </span>
         <span slot="minPrice" slot-scope="text">
-          <span style="color: #87d068;">￥{{ text }}</span>
+          <span style="color: #87d068; font-weight: bold;">￥{{ text }}</span>
         </span>
         <span slot="action" slot-scope="text, record">
           <a-tooltip placement="top">
@@ -168,12 +184,16 @@
         <a-table
             slot="expandedRowRender"
             slot-scope="pText"
-            key="goodsId"
+            rowKey="id"
             :columns="innerColumns"
             :data-source="pText.innerData"
             :pagination="false"
             :loading="innerLoading"
+            @change="handleSorter"
         >
+          <span slot="goodsName" slot-scope="text, record">
+            {{ text }} <span style="color: red">{{ record.maxWear }} - {{ record.minWear }}</span>
+          </span>
           <span slot="wtName" slot-scope="text, record">
             <a-tag
                 :color="record.wearType === 1 ? 'cyan' :
@@ -197,7 +217,7 @@
             > | {{ record.realMaximumWear }}</span>
           </span>
           <span slot="mPrice" slot-scope="text">
-            <span :style="{ color: pText.minPrice === text ? '#87d068' : ''}">￥{{ text }}</span>
+            <span :style="{ color: pText.minPrice === text ? '#87d068' : '', fontWeight: 'bold'}">￥{{ text }}</span>
           </span>
           <span slot="buffPrice" slot-scope="text">
             <span style="font-weight: bold;">￥{{ text }} </span>
@@ -218,13 +238,13 @@ import { STable, Ellipsis } from '@/components'
 import { queryBox, syncBox, syncAll, collect, collectList, getGoodsList } from '@/api/sync'
 
 const columns = [
-  { title: '箱子名称', dataIndex: 'boxName' },
+  { title: '箱子名称', dataIndex: 'boxName', scopedSlots: { customRender: 'boxName' } },
   { title: '等级', dataIndex: 'levelName', scopedSlots: { customRender: 'levelName' } },
   { title: '类型', dataIndex: 'typeName', scopedSlots: { customRender: 'typeName' } },
   { title: '磨损类型', dataIndex: 'wearTypeName', scopedSlots: { customRender: 'wearTypeName' } },
   { title: '最小磨损', dataIndex: 'minimumWear' },
   { title: '最大磨损', dataIndex: 'maximumWear' },
-  { title: '最低价格', dataIndex: 'minPrice', scopedSlots: { customRender: 'minPrice' } },
+  { title: '最低价格', dataIndex: 'minPrice', scopedSlots: { customRender: 'minPrice' }, sorter: (a, b) => a.minPrice - b.minPrice },
   {
     title: '操作',
     dataIndex: 'action',
@@ -261,14 +281,34 @@ export default {
       innerColumns: [
         { title: '名称',
           dataIndex: 'goodsName',
-          width: '200px'
+          width: '200px',
+          customRender: (() => {
+            let prevName = null
+            return (value, row) => {
+              if (!row.rowSpan) {
+                return { children: value }
+              }
+              if (value !== prevName) {
+                prevName = value
+                return { children: <a-tooltip placement="top">
+                                    <template slot="title">
+                                      <span>磨损区间：{row.minWear} - {row.maxWear}</span>
+                                    </template>
+                                    {value}
+                                  </a-tooltip>,
+                  attrs: { rowSpan: row.rowSpan } }
+              } else {
+                return { children: value, attrs: { rowSpan: 0 } } // 合并行
+              }
+            }
+          })()
         },
         { title: '磨损类型', dataIndex: 'wearTypeName', scopedSlots: { customRender: 'wtName' } },
         { title: '最小磨损', dataIndex: 'minimumWear', scopedSlots: { customRender: 'minWear' } },
         { title: '最大磨损', dataIndex: 'maximumWear', scopedSlots: { customRender: 'maxWear' } },
-        { title: 'BUFF价格', dataIndex: 'buffPrice', scopedSlots: { customRender: 'buffPrice' } },
-        { title: 'STEAM价格', dataIndex: 'steamPrice', scopedSlots: { customRender: 'steamPrice' } },
-        { title: '最低价格', dataIndex: 'minPrice', scopedSlots: { customRender: 'mPrice' } }
+        { title: 'BUFF价格', dataIndex: 'buffPrice', scopedSlots: { customRender: 'buffPrice' }, sorter: (a, b) => a.buffPrice - b.buffPrice },
+        { title: 'STEAM价格', dataIndex: 'steamPrice', scopedSlots: { customRender: 'steamPrice' }, sorter: (a, b) => a.stprice - b.stprice },
+        { title: '最低价格', dataIndex: 'minPrice', scopedSlots: { customRender: 'mPrice' }, sorter: (a, b) => a.minPrice - b.minPrice }
       ],
       innerLoading: false,
       // 查询参数
@@ -338,18 +378,20 @@ export default {
     handleExpand (e, record) {
       if (!e) return
       this.innerLoading = true
-      getGoodsList(record.id).then(res => {
+      getGoodsList({ collectId: record.id, minPrice: this.queryParam.minPrice }).then(res => {
+        res.forEach(item => {
+          item.rowSpan = res.filter(i => i.goodsName === item.goodsName).length
+        })
         this.$set(record, 'innerData', res)
       }).finally(() => {
         this.innerLoading = false
       })
     },
-    handleSub (record) {
-      if (record.status !== 0) {
-        this.$message.info(`${record.no} 订阅成功`)
-      } else {
-        this.$message.error(`${record.no} 订阅失败，规则已关闭`)
-      }
+    handleSorter (pagination, filters, sorter, { currentDataSource }) {
+      currentDataSource.forEach(item => {
+        const span = currentDataSource.filter(i => i.goodsName === item.goodsName).length
+        item.rowSpan = !sorter.order ? span : null
+      })
     },
     toggleAdvanced () {
       this.advanced = !this.advanced
@@ -357,3 +399,6 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+</style>
