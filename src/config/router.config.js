@@ -20,6 +20,12 @@ export const asyncRouterMap = [
         name: 'sync',
         component: () => import('@/views/sync/List'),
         meta: { title: '同步数据', icon: 'sync', permission: ['table'] }
+      },
+      {
+        path: '/calculate',
+        name: 'calculate',
+        component: () => import('@/views/calculate/List'),
+        meta: { title: '计算合约', icon: 'reconciliation', permission: ['table'] }
       }
       // dashboard
       // {

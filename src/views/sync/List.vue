@@ -2,7 +2,7 @@
   <page-header-wrapper :title="false">
     <a-card :bordered="false">
       <div class="table-page-search-wrapper">
-        <a-form layout="inline">
+        <a-form layout="inline" @keydown.native.enter="() => $refs.table.refresh(true)">
           <a-row :gutter="48">
             <a-col :md="6" :sm="24">
               <a-form-item label="箱子名称">
@@ -130,6 +130,7 @@
         :pageSize="pageSize"
         showPagination="auto"
         :loading="loading"
+        :expandedRowKeys="expandedRowKeys"
         :showAlertInfo="true"
         :expandRowByClick="true"
         @expand="handleExpand"
@@ -278,6 +279,7 @@ export default {
       boxLoading: false,
       syncLoading: false,
       collectLoading: false,
+      expandedRowKeys: [],
       innerColumns: [
         { title: '名称',
           dataIndex: 'goodsName',
@@ -328,6 +330,7 @@ export default {
             this.totalCount = res.total
             return res
           }).finally(() => {
+            this.expandedRowKeys = []
             this.loading = false
           })
     },
@@ -376,7 +379,10 @@ export default {
     },
     // 展开/收起商品详情
     handleExpand (e, record) {
-      if (!e) return
+      if (!e) {
+        this.expandedRowKeys = this.expandedRowKeys.filter(item => record.id !== item)
+        return
+      }
       this.innerLoading = true
       getGoodsList({ collectId: record.id, minPrice: this.queryParam.minPrice }).then(res => {
         res.forEach(item => {
@@ -385,6 +391,7 @@ export default {
         this.$set(record, 'innerData', res)
       }).finally(() => {
         this.innerLoading = false
+        this.expandedRowKeys.push(record.id)
       })
     },
     handleSorter (pagination, filters, sorter, { currentDataSource }) {
