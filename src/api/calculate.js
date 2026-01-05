@@ -1,7 +1,8 @@
 import request from '@/utils/request'
 
 const api = {
-  rule: '/rule'
+  rule: '/rule',
+  contract: '/contract'
 }
 
 export default api
@@ -76,5 +77,42 @@ export function del (id) {
   return request({
     url: `${api.rule}/delete/${id}`,
     method: 'delete'
+  })
+}
+
+/**
+ * 查询所有合约数据
+ * @param parameter
+ * @returns {*}
+ */
+export function contractList (parameter) {
+  return request({
+    url: `${api.contract}/pageList`,
+    method: 'get',
+    params: parameter
+  })
+}
+
+/**
+ * 计算合约
+ * @returns {*}
+ */
+export function calculate () {
+  return request({
+    url: `${api.contract}/calculate`,
+    method: 'get'
+  })
+}
+
+/**
+ * 查询商品价格
+ * @param goodsId
+ * @param wearType
+ * @returns {*}
+ */
+export function getPrice (goodsId, wearType) {
+  return request({
+    url: `${api.contract}/price/${goodsId}/${wearType}`,
+    method: 'get'
   })
 }
