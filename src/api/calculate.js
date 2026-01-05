@@ -116,3 +116,29 @@ export function getPrice (goodsId, wearType) {
     method: 'get'
   })
 }
+
+/**
+ * 收藏和约
+ * @param contractId
+ * @returns {*}
+ */
+export function collect (parameter) {
+  return request({
+    url: `${api.contract}/collect`,
+    method: 'post',
+    data: parameter
+  })
+}
+
+/**
+ * 删除合约
+ * @param collectId
+ * @returns {*}
+ */
+export function delBatchContract (parameter) {
+  return request({
+    url: `${api.contract}/delete/batch`,
+    method: 'delete',
+    params: parameter
+  })
+}

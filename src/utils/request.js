@@ -1,4 +1,5 @@
 import axios from 'axios'
+import qs from 'qs'
 import store from '@/store'
 import storage from 'store'
 import notification from 'ant-design-vue/es/notification'
@@ -48,6 +49,11 @@ request.interceptors.request.use(config => {
   // 让每个请求携带自定义 token 请根据实际情况自行修改
   if (token) {
     config.headers[ACCESS_TOKEN] = token
+  }
+  if (config.method === 'get' || config.method === 'delete') {
+    config.paramsSerializer = function (params) {
+      return qs.stringify(params, { arrayFormat: 'repeat' })
+    }
   }
   return config
 }, errorHandler)

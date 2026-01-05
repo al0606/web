@@ -41,38 +41,33 @@
     </template>
     <a-card :bordered="false">
       <div class="table-page-search-wrapper">
-        <a-form layout="inline">
+        <a-form layout="inline" @keydown.native.enter="() => $refs.table.refresh(true)">
           <a-row :gutter="48">
             <a-col :md="6" :sm="24">
-              <a-form-item label="箱子名称">
-                <a-input v-model="queryParam.boxName" placeholder=""/>
+              <a-form-item label="是否收藏">
+                <a-select v-model="queryParam.mark" placeholder="请选择" allowClear>
+                  <a-select-option value="0">未收藏</a-select-option>
+                  <a-select-option value="1">已收藏</a-select-option>
+                </a-select>
               </a-form-item>
             </a-col>
-            <template v-if="advanced">
-              <a-col :md="6" :sm="24">
-                <a-form-item label="类型">
-                  <a-select v-model="queryParam.type" placeholder="请选择" default-value="1" allowClear>
-                    <a-select-option value="1">普通</a-select-option>
-                    <a-select-option value="2">StartTrak</a-select-option>
-                  </a-select>
-                </a-form-item>
-              </a-col>
-              <a-col :md="6" :sm="24">
-                <a-form-item label="最低价格">
-                  <a-input v-model="queryParam.minPrice" placeholder="请输入最低价格"/>
-                </a-form-item>
-              </a-col>
-            </template>
-            <a-col :md="!advanced && 6 || 24" :sm="24">
-              <span class="table-page-search-submitButtons" :style="advanced && { float: 'right', overflow: 'hidden' } || {} ">
-                <a-button type="primary" @click="$refs.table.refresh(true)">查询</a-button>
-                <a-button style="margin-left: 8px" @click="() => this.queryParam = {}">重置</a-button>
-                <a @click="toggleAdvanced" style="margin-left: 8px">
-                  {{ advanced ? '收起' : '展开' }}
-                  <a-icon :type="advanced ? 'up' : 'down'"/>
-                </a>
-              </span>
-            </a-col>
+<!--            <template v-if="advanced">-->
+<!--              <a-col :md="6" :sm="24">-->
+<!--                <a-form-item label="箱子名称">-->
+<!--                  <a-input v-model="queryParam.boxName" placeholder=""/>-->
+<!--                </a-form-item>-->
+<!--              </a-col>-->
+<!--            </template>-->
+<!--            <a-col :md="!advanced && 6 || 24" :sm="24">-->
+<!--              <span class="table-page-search-submitButtons" :style="advanced && { float: 'right', overflow: 'hidden' } || {} ">-->
+<!--                <a-button type="primary" @click="$refs.table.refresh(true)">查询</a-button>-->
+<!--                <a-button style="margin-left: 8px" @click="() => this.queryParam = {}">重置</a-button>-->
+<!--                <a @click="toggleAdvanced" style="margin-left: 8px">-->
+<!--                  {{ advanced ? '收起' : '展开' }}-->
+<!--                  <a-icon :type="advanced ? 'up' : 'down'"/>-->
+<!--                </a>-->
+<!--              </span>-->
+<!--            </a-col>-->
           </a-row>
         </a-form>
         <a-alert :showIcon="true" style="margin: 10px 0">
@@ -81,7 +76,12 @@
           </template>
         </a-alert>
         <div class="table-operator">
-          <a-button v-if="selectedRowKeys.length > 0" type="primary" icon="plus" @click="handleAdd">批量删除</a-button>
+          <a-popconfirm
+              title="是否确认删除"
+              @confirm="handleDelete()"
+          >
+            <a-button v-if="selectedRowKeys.length > 0" type="primary" icon="plus">批量删除</a-button>
+          </a-popconfirm>
         </div>
       </div>
 
@@ -151,7 +151,7 @@
                       <a-tag>X{{ item.count }} </a-tag>
                       <a-tag color="#108ee9">X{{ item.price }}</a-tag>
                     </a-col>
-                    <a-col :span="6">
+                    <a-col :span="5">
                       <a-slider
                           :value="item.defaultWear"
                           :min="wearType[item.wearType - 1].minWear"
@@ -160,14 +160,21 @@
                           @change="changeDefaultWear(pText, item, $event)"
                       />
                     </a-col>
-                    <a-col :span="4">
+                    <a-col :span="2">
                       <a-input-number
                           @change="changeDefaultWear(pText, item, $event)"
                           :value="item.defaultWear"
                           :min="wearType[item.wearType - 1].minWear"
                           :max="wearType[item.wearType - 1].maxWear"
                           :step="0.0001"
-                          style="margin-left: 16px"
+                      />
+                    </a-col>
+                    <a-col :span="5">
+                      <a-input-number
+                          @change="changePrice(pText, item, $event)"
+                          :value="item.price"
+                          :step="0.01"
+                          style="margin-left: 30px;"
                       />
                     </a-col>
                   </a-row>
@@ -185,7 +192,7 @@
                     <a-tag :color="goods.minPrice > item.price ? '#f50' : '#87d068'">{{ goods.minPrice }} </a-tag>
                     </a-col>
                     <a-col :span="12">
-                      <template v-if="goods.changeWearType && goods.wearType !== goods.changeWearType">
+                      <template v-if="goods.changeDefaultWear && goods.defaultWear !== goods.changeDefaultWear">
                         ====>
                         <a-tag
                             :color="goods.changeWearType === 1 ? 'cyan' :
@@ -193,6 +200,8 @@
                             goods.changeWearType === 3 ? 'orange' :
                             goods.changeWearType === 4 ? 'pink' : 'red'"
                         >{{ goods.changeWearTypeName }} | {{ goods.changeDefaultWear }}</a-tag>
+                      </template>
+                      <template v-if="goods.changeWearType && goods.wearType !== goods.changeWearType">
                         <a-tag
                             v-if="goods.changeMinPrice && goods.changeMinPrice !== goods.minPrice"
                             :color="goods.changeMinPrice > goods.minPrice ? '#f50' : '#87d068'"
@@ -240,14 +249,16 @@
                     </template>
                   </a-col>
                   <a-col :span="8">
+                    <template v-if="item.changeWear && item.wear !== item.changeWear">
+                        ====>
+                        <a-tag
+                            :color="item.changeWearType === 1 ? 'cyan' :
+                            item.changeWearType === 2 ? 'green' :
+                            item.changeWearType === 3 ? 'orange' :
+                        item.changeWearType === 4 ? 'pink' : 'red'"
+                        >{{ item.changeWearTypeName }} | {{ item.changeWear }}</a-tag>
+                    </template>
                     <template v-if="item.changeWearType && item.wearType !== item.changeWearType">
-                      ====>
-                      <a-tag
-                          :color="item.changeWearType === 1 ? 'cyan' :
-                          item.changeWearType === 2 ? 'green' :
-                          item.changeWearType === 3 ? 'orange' :
-                          item.changeWearType === 4 ? 'pink' : 'red'"
-                      >{{ item.changeWearTypeName }} | {{ item.changeWear }}</a-tag>
                       <a-tag
                           v-if="item.changePrice && item.changePrice !== item.price"
                           :color="item.changePrice < item.price ? '#f50' : '#87d068'"
@@ -268,19 +279,19 @@
                 type="star"
                 :theme="record.mark ? 'filled' : 'outlined'"
                 :style="{ color: '#108ee9' }"
-                @click="handleSyncBox(record.boxId)"
+                @click="handleCollect(record)"
             />
           </a-tooltip>
         </span>
       </s-table>
     </a-card>
-    <rule-list ref="ruleList" @close="load"></rule-list>
+    <rule-list ref="ruleList" @close="changeRule"></rule-list>
   </page-header-wrapper>
 </template>
 
 <script>
 import { STable } from '@/components'
-import { getEnable, contractList, calculate, getPrice } from '@/api/calculate'
+import { getEnable, contractList, calculate, getPrice, collect, delBatchContract } from '@/api/calculate'
 import RuleList from '@/views/calculate/modules/RuleList.vue'
 
 const wearType = [
@@ -348,9 +359,12 @@ export default {
   },
   methods: {
     load () {
-      getEnable().then(res => {
+      return getEnable().then(res => {
         this.rule = res
-      }).finally(() => {
+      })
+    },
+    changeRule () {
+      this.load().finally(() => {
         this.$refs.table.refresh(true)
       })
     },
@@ -368,6 +382,10 @@ export default {
     },
     toggleAdvanced () {
       this.advanced = !this.advanced
+    },
+    changePrice (pText, record, e) {
+      record.price = e
+      pText.costPrice = pText.materialsVos.reduce((acc, cur) => acc + cur.price * cur.count, 0)
     },
     changeDefaultWear (pText, record, e) {
       this.activeKey.push(record.id)
@@ -408,6 +426,30 @@ export default {
     handleGetPrice (record, priceField) {
       getPrice(record.goodsId, record.changeWearType).then(res => {
        record[priceField] = res.price
+      })
+    },
+    handleDelete () {
+      delBatchContract({ ids: this.selectedRowKeys }).then(res => {
+        if (res) {
+          this.$message.success('删除成功')
+        }
+      }).finally(() => {
+        this.$refs.table.refresh(true)
+      })
+    },
+    handleCollect (record) {
+      if (record.mark) return
+      const materials = record.materialsVos.map(item => ({
+        collectBoxId: item.collectBoxId,
+        wear: item.changeDefaultWear || item.defaultWear,
+        price: item.price
+      }))
+      collect({ contractId: record.id, materials }).then(res => {
+        if (res) {
+          this.$message.success('收藏成功')
+        }
+      }).finally(() => {
+        this.$refs.table.refresh(true)
       })
     }
   }
