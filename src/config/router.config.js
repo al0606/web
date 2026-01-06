@@ -25,7 +25,13 @@ export const asyncRouterMap = [
         path: '/calculate',
         name: 'calculate',
         component: () => import('@/views/calculate/List'),
-        meta: { title: '计算合约', icon: 'reconciliation', permission: ['table'] }
+        meta: { title: '计算合约', icon: 'calculator', permission: ['table'] }
+      },
+      {
+        path: '/purchase',
+        name: 'purchase',
+        component: () => import('@/views/purchase/List'),
+        meta: { title: '采购材料', icon: 'reconciliation', permission: ['table'] }
       }
       // dashboard
       // {
