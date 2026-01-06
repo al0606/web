@@ -32,6 +32,12 @@ export const asyncRouterMap = [
         name: 'purchase',
         component: () => import('@/views/purchase/List'),
         meta: { title: '采购材料', icon: 'reconciliation', permission: ['table'] }
+      },
+      {
+        path: '/warehouse',
+        name: 'warehouse',
+        component: () => import('@/views/warehouse/List'),
+        meta: { title: '仓库数据', icon: 'database', permission: ['table'] }
       }
       // dashboard
       // {

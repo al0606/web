@@ -50,7 +50,7 @@ request.interceptors.request.use(config => {
   if (token) {
     config.headers[ACCESS_TOKEN] = token
   }
-  if (config.method === 'get' || config.method === 'delete') {
+  if (config.method === 'get' || config.method === 'delete' || config.method === 'post') {
     config.paramsSerializer = function (params) {
       return qs.stringify(params, { arrayFormat: 'repeat' })
     }

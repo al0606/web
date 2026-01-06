@@ -219,7 +219,7 @@ export default {
         return {
           ...item,
           total: selectedRows.reduce((sum, val) => {
-            const total = sum + parseInt(get(val, item.dataIndex))
+            const total = sum + get(val, item.dataIndex)
             return isNaN(total) ? 0 : total
           }, 0)
         }
@@ -267,7 +267,8 @@ export default {
       return (
         <a-alert showIcon={true} style="margin-bottom: 16px">
           <template slot="message">
-            <span style="margin-right: 12px">已选择: <a style="font-weight: 600">{this.selectedRows.length}</a></span>
+            <span>共 { this.localPagination.total || 0 } 条数据 </span>
+            <span style="margin: 0 12px">已选择: <a style="font-weight: 600">{this.selectedRows.length}</a></span>
             {needTotalItems}
             {clearItem}
           </template>
