@@ -181,6 +181,12 @@
             </template>
             <a-icon type="sync" :style="{ color: '#108ee9' }" @click="handleSyncBox(record.boxId)" />
           </a-tooltip>
+          <a-divider type="vertical"/>
+          <a @click="handleCreatePurchase(record)">
+            <a-tooltip title="创建采购">
+              <a-icon type="reconciliation" title="创建采购"/>
+            </a-tooltip>
+          </a>
         </span>
         <a-table
             slot="expandedRowRender"
@@ -236,7 +242,7 @@
 <script>
 import moment from 'moment'
 import { STable, Ellipsis } from '@/components'
-import { queryBox, syncBox, syncAll, collect, collectList, getGoodsList } from '@/api/sync'
+import { queryBox, syncBox, syncAll, collect, collectList, getGoodsList, createPurchase } from '@/api/sync'
 
 const columns = [
   { title: '箱子名称', dataIndex: 'boxName', scopedSlots: { customRender: 'boxName' } },
@@ -398,6 +404,18 @@ export default {
       currentDataSource.forEach(item => {
         const span = currentDataSource.filter(i => i.goodsName === item.goodsName).length
         item.rowSpan = !sorter.order ? span : null
+      })
+    },
+    /**
+     * 创建采购
+     */
+    handleCreatePurchase (record) {
+      createPurchase(record.id).then(res => {
+        if (res) {
+          this.$message.success('创建采购成功')
+        }
+      }).finally(() => {
+        this.$refs.table.refresh(true)
       })
     },
     toggleAdvanced () {

@@ -20,10 +20,11 @@
         style="width: 150px;"
         @change="changeWear(goods, $event)"
         :value="wear"
-        :min="goods.minWear"
-        :max="goods.maxWear"
+        :min="goods.minimumWear"
+        :max="goods.maximumWear"
         :step="0.0001"
     />
+    【{{ goods.minimumWear }} - {{ goods.maximumWear }}】
     结果：{{ realWear }}
     <avatar-dropdown :menu="showMenu" :current-user="currentUser" :class="prefixCls" />
     <select-lang :class="prefixCls" />

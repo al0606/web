@@ -9,9 +9,14 @@
       <a-tag color="#1890ff" @click="$refs.ruleList.open()">
         切换 <a-icon type="swap" />
       </a-tag>
-      <a-tag color="#1890ff" @click="handleCalculate">
-        运算 <a-icon type="caret-right" />
-      </a-tag>
+      <a-popconfirm
+          title="是否确认运算"
+          @confirm="handleCalculate"
+      >
+        <a-tag color="#1890ff">
+          运算 <a-icon type="caret-right" />
+        </a-tag>
+      </a-popconfirm>
     </template>
     <template slot="content">
       <a-row type="flex">

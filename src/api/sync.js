@@ -2,7 +2,8 @@ import request from '@/utils/request'
 
 const api = {
   sync: '/sync',
-  collect: '/collect'
+  collect: '/collect',
+  purchase: '/purchase'
 }
 
 export default api
@@ -77,5 +78,17 @@ export function getGoodsList (parameter) {
     url: `${api.collect}/goods`,
     method: 'get',
     params: parameter
+  })
+}
+
+/**
+ * 创建采购
+ * @param collectBoxId
+ * @returns {*}
+ */
+export function createPurchase (collectBoxId) {
+  return request({
+    url: `${api.purchase}/create/${collectBoxId}`,
+    method: 'post'
   })
 }

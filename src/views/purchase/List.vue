@@ -102,8 +102,36 @@
                           record.wearType === 4 ? 'pink' : 'red'"
           >{{ text }}</a-tag>
         </span>
-        <span slot="price" slot-scope="text">
-          <span style="color: #87d068; font-weight: bold;">￥{{ text }}</span>
+        <span slot="price" slot-scope="text, record">
+          <span style="color: #87d068; font-weight: bold; margin-right: 8px;">
+            <a-input-number
+                v-if="record.priceInput"
+                style="width: 100px"
+                :formatter="value => `￥ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')"
+                :parser="value => value.replace(/￥\s?|(,*)/g, '')"
+                v-model="record.price"
+                @pressEnter="handleEdit(record)"
+                @blur="handleEdit(record)"
+            />
+            <span v-else>￥{{ text }}</span>
+          </span>
+          <a-icon type="edit" style="color: #2db7f5; cursor: pointer;" @click="$set(record, 'priceInput', true)"/>
+        </span>
+        <span slot="wear" slot-scope="text, record">
+          <a-input-number
+              v-if="record.wearInput"
+              style="width: 100px"
+              :max="record.maxWear"
+              :min="record.minWear"
+              :step="0.0001"
+              v-model="record.wear"
+              @pressEnter="handleEdit(record)"
+              @blur="handleEdit(record)"
+          />
+          <span v-else>
+            <span style="font-weight: bold;">{{ text }}</span>
+          </span>
+          <a-icon type="edit" style="color: #2db7f5; cursor: pointer;" @click="$set(record, 'wearInput', true)"/>
         </span>
         <span slot="action" slot-scope="text, record">
           <a-popover :title="false" @visibleChange="(flag) => flag ? checkWear(record) : null" trigger="click">
@@ -166,7 +194,7 @@
 
 <script>
 import { STable, Ellipsis } from '@/components'
-import { purchaseList, findGoodsWear, del } from '@/api/purchase'
+import { purchaseList, findGoodsWear, del, updatePurchase } from '@/api/purchase'
 
 const wearType = [
   { code: 1, name: '崭新出厂', minWear: 0, maxWear: 0.07, color: 'cyan' },
@@ -192,7 +220,7 @@ export default {
         { title: '等级', dataIndex: 'levelName', scopedSlots: { customRender: 'levelName' } },
         { title: '类型', dataIndex: 'typeName', scopedSlots: { customRender: 'typeName' } },
         { title: '磨损类型', dataIndex: 'wearTypeName', scopedSlots: { customRender: 'wearTypeName' } },
-        { title: '磨损度', dataIndex: 'wear' },
+        { title: '磨损度', dataIndex: 'wear', scopedSlots: { customRender: 'wear' } },
         { title: '价格', dataIndex: 'price', scopedSlots: { customRender: 'price' }, sorter: (a, b) => a.minPrice - b.minPrice },
         { title: '已采购数量', dataIndex: 'count' },
         {
@@ -238,6 +266,17 @@ export default {
       const wt = this.wearType.find(item => item.minWear <= record.wear && record.wear < item.maxWear)
       record.wearType = wt.code
       record.wearTypeName = wt.name
+    },
+    handleEdit (record) {
+      updatePurchase({ ...record }).then(res => {
+        if (res) {
+          this.$message.success('保存成功')
+        } else {
+          this.$message.error('保存失败')
+        }
+      }).finally(() => {
+        this.$refs.table.refresh(true)
+      })
     },
     handleDelete (record) {
       del(record.id).then(res => {

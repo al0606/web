@@ -42,3 +42,16 @@ export function del (id) {
     method: 'delete'
   })
 }
+
+/**
+ * 更新采购
+ * @param collectBoxId
+ * @returns {*}
+ */
+export function updatePurchase (parameter) {
+  return request({
+    url: `${api.purchase}/update`,
+    method: 'post',
+    data: parameter
+  })
+}

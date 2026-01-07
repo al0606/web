@@ -102,6 +102,14 @@
               <a-input v-decorator="['repeatedNum', { rules: [{ required: true, message: '请输入材料格式'}] }]" />
             </a-form-item>
           </a-col>
+          <a-col :md="12" :sm="24">
+            <a-form-item label="是否自定义">
+              <a-radio-group v-decorator="['isCustom', { rules: [{ required: true, message: '请选择是否自定义'}] }]">
+                <a-radio :value="true">是</a-radio>
+                <a-radio :value="false">否</a-radio>
+              </a-radio-group>
+            </a-form-item>
+          </a-col>
         </a-row>
       </a-form>
     </a-spin>
@@ -116,7 +124,7 @@ import { saveRule, detail } from '@/api/calculate'
 const fields = [
   'id', 'name', 'combinationSize', 'resultsNum', 'costPrice',
   'goodsType', 'goodsLevel', 'defaultWear', 'desiredValue',
-  'successRate', 'repeatedNum'
+  'successRate', 'repeatedNum', 'isCustom'
 ]
 
 export default {

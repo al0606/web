@@ -5,35 +5,53 @@
         <a-form layout="inline" @keydown.native.enter="() => $refs.table.refresh(true)">
           <a-row :gutter="48">
             <a-col :md="6" :sm="24">
-              <a-form-item label="箱子名称">
-                <a-input v-model="queryParam.boxName" placeholder=""/>
+              <a-form-item label="商品名称">
+                <a-input v-model="queryParam.goodsName" placeholder=""/>
               </a-form-item>
             </a-col>
             <a-col :md="6" :sm="24">
-              <a-form-item label="等级">
-                <a-select v-model="queryParam.level" placeholder="请选择" allowClear>
-                  <a-select-option value="1">消费级</a-select-option>
-                  <a-select-option value="2">工业级</a-select-option>
-                  <a-select-option value="3">军规级</a-select-option>
-                  <a-select-option value="4">受限级</a-select-option>
-                  <a-select-option value="5">保密级</a-select-option>
-                  <a-select-option value="6">隐秘级</a-select-option>
-                  <a-select-option value="7">违禁级</a-select-option>
-                </a-select>
+              <a-form-item label="备注">
+                <a-input v-model="queryParam.remark" placeholder=""/>
               </a-form-item>
             </a-col>
             <a-col :md="6" :sm="24">
-              <a-form-item label="磨损类型">
-                <a-select v-model="queryParam.wearType" placeholder="请选择" allowClear>
-                  <a-select-option value="1">崭新出厂</a-select-option>
-                  <a-select-option value="2">略有磨损</a-select-option>
-                  <a-select-option value="3">久经沙场</a-select-option>
-                  <a-select-option value="4">破损不堪</a-select-option>
-                  <a-select-option value="5">战痕累累</a-select-option>
+              <a-form-item label="已备注">
+                <a-select v-model="queryParam.isRemark" placeholder="请选择" allowClear>
+                  <a-select-option value="1">是</a-select-option>
+                  <a-select-option value="0">否</a-select-option>
                 </a-select>
               </a-form-item>
             </a-col>
             <template v-if="advanced">
+              <a-col :md="6" :sm="24">
+                <a-form-item label="箱子名称">
+                  <a-input v-model="queryParam.boxName" placeholder=""/>
+                </a-form-item>
+              </a-col>
+              <a-col :md="6" :sm="24">
+                <a-form-item label="等级">
+                  <a-select v-model="queryParam.level" placeholder="请选择" allowClear>
+                    <a-select-option value="1">消费级</a-select-option>
+                    <a-select-option value="2">工业级</a-select-option>
+                    <a-select-option value="3">军规级</a-select-option>
+                    <a-select-option value="4">受限级</a-select-option>
+                    <a-select-option value="5">保密级</a-select-option>
+                    <a-select-option value="6">隐秘级</a-select-option>
+                    <a-select-option value="7">违禁级</a-select-option>
+                  </a-select>
+                </a-form-item>
+              </a-col>
+              <a-col :md="6" :sm="24">
+                <a-form-item label="磨损类型">
+                  <a-select v-model="queryParam.wearType" placeholder="请选择" allowClear>
+                    <a-select-option value="1">崭新出厂</a-select-option>
+                    <a-select-option value="2">略有磨损</a-select-option>
+                    <a-select-option value="3">久经沙场</a-select-option>
+                    <a-select-option value="4">破损不堪</a-select-option>
+                    <a-select-option value="5">战痕累累</a-select-option>
+                  </a-select>
+                </a-form-item>
+              </a-col>
               <a-col :md="6" :sm="24">
                 <a-form-item label="类型">
                   <a-select v-model="queryParam.type" placeholder="请选择" default-value="1" allowClear>
@@ -84,6 +102,7 @@
         showPagination="auto"
         :loading="loading"
         :alert="true"
+        :scroll="{  x: true }"
       >
         <span slot="goodsName" slot-scope="text, record">
           <a-tag color="purple">{{ record.goodsName }} 【{{ record.minWear }} - {{ record.maxWear }}】</a-tag>
@@ -197,8 +216,8 @@ export default {
         { title: '磨损度', dataIndex: 'wear', needTotal: true, scopedSlots: { customRender: 'wear' }, sorter: (a, b) => a.wear - b.wear },
         { title: '真实磨损度', dataIndex: 'realWear', needTotal: true, scopedSlots: { customRender: 'realWear' }, sorter: (a, b) => a.realWear - b.realWear },
         { title: '价格', dataIndex: 'price', needTotal: true, scopedSlots: { customRender: 'price' }, sorter: (a, b) => a.price - b.price },
-        { title: '备注', dataIndex: 'remark', scopedSlots: { customRender: 'remark' } },
-        { title: '消耗时间', dataIndex: 'handlingTime' }
+        { title: '消耗时间', dataIndex: 'handlingTime' },
+        { title: '备注', dataIndex: 'remark', scopedSlots: { customRender: 'remark' }, width: 200, fixed: 'right' }
       ],
       loading: false,
       // 高级搜索 展开/关闭
@@ -284,6 +303,8 @@ export default {
           this.$message.success('更新成功')
         }
       }).finally(() => {
+        this.selectedRowKeys = []
+        this.selectedRows = []
         this.$refs.table.refresh(true)
       })
     }
