@@ -205,7 +205,7 @@ export default {
   data () {
     return {
       wearType,
-      pageSize: 20,
+      pageSize: 100,
       totalCount: 0,
       columns: [
         { title: '箱子名称', dataIndex: 'boxName' },
@@ -247,7 +247,7 @@ export default {
             this.totalCount = res.total
             return res
           }).finally(() => {
-            this.expandedRowKeys = []
+            this.$refs.table.clearSelected()
             this.loading = false
           })
     },
@@ -303,8 +303,7 @@ export default {
           this.$message.success('更新成功')
         }
       }).finally(() => {
-        this.selectedRowKeys = []
-        this.selectedRows = []
+        this.$refs.table.clearSelected()
         this.$refs.table.refresh(true)
       })
     }

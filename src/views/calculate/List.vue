@@ -327,6 +327,7 @@ export default {
         { title: '盈利概率', dataIndex: 'rate', scopedSlots: { customRender: 'rate' }, sorter: (a, b) => a.rate - b.rate },
         { title: '最大亏损', dataIndex: 'maximumLoss', scopedSlots: { customRender: 'maximumLoss' }, sorter: (a, b) => a.maximumLoss - b.maximumLoss },
         { title: '最大盈利', dataIndex: 'maximumProfit', scopedSlots: { customRender: 'maximumProfit' }, sorter: (a, b) => a.maximumProfit - b.maximumProfit },
+        { title: '平均磨损', dataIndex: 'avgWear', scopedSlots: { customRender: 'avgWear' }, sorter: (a, b) => a.avgWear - b.avgWear },
         {
           title: '操作',
           dataIndex: 'action',

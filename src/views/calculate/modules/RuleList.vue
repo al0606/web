@@ -2,7 +2,7 @@
   <a-drawer
     title="选择规则"
     :destroyOnClose = true
-    :width="780"
+    :width="850"
     :visible="visible"
     :footer="null"
     :bodyStyle="{ margin: 0, padding: 0 }"
@@ -88,6 +88,7 @@ export default {
       visible: false,
       loading: false,
       columns: [
+        { title: '规则名称', dataIndex: 'name' },
         { title: '商品类型', dataIndex: 'goodsTypeName' },
         { title: '商品等级', dataIndex: 'goodsLevelName', scopedSlots: { customRender: 'goodsLevel' } },
         { title: '默认磨损', dataIndex: 'defaultWear', scopedSlots: { customRender: 'defaultWear' } },
