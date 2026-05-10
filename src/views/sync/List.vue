@@ -147,14 +147,7 @@
           />
         </span>
         <span slot="levelName" slot-scope="text, record">
-          <a-badge
-              :color="record.level === 1 ? '#b0c3d9' :
-                record.level === 2 ? '#5e98d9' :
-                record.level === 3 ? '#4b69ff' :
-                record.level === 4 ? '#8847ff' :
-                record.level === 5 ? '#d32ce6' :
-                record.level === 6 ? '#eb4b4b' : '#e4ae39'"
-          ></a-badge>{{ text }}
+          <a-badge :color="levelColors[record.level] || '#e4ae39'"></a-badge>{{ text }}
         </span>
         <span slot="typeName" slot-scope="text, record">
           <template v-if="record.type === 2">⭐️</template>
@@ -164,12 +157,7 @@
           <span style="color: #2db7f5;" v-else>===|</span>
         </span>
         <span slot="wearTypeName" slot-scope="text, record">
-          <a-tag
-              :color="record.wearType === 1 ? 'cyan' :
-                          record.wearType === 2 ? 'green' :
-                          record.wearType === 3 ? 'orange' :
-                          record.wearType === 4 ? 'pink' : 'red'"
-          >{{ text }}</a-tag>
+          <a-tag :color="wearTagColors[record.wearType]">{{ text }}</a-tag>
         </span>
         <span slot="minPrice" slot-scope="text">
           <span style="color: #87d068; font-weight: bold;">￥{{ text }}</span>
@@ -202,12 +190,7 @@
             {{ text }} <span style="color: red">{{ record.maxWear }} - {{ record.minWear }}</span>
           </span>
           <span slot="wtName" slot-scope="text, record">
-            <a-tag
-                :color="record.wearType === 1 ? 'cyan' :
-                            record.wearType === 2 ? 'green' :
-                            record.wearType === 3 ? 'orange' :
-                            record.wearType === 4 ? 'pink' : 'red'"
-            >{{ text }}</a-tag>
+            <a-tag :color="wearTagColors[record.wearType]">{{ text }}</a-tag>
           </span>
           <span slot="minWear" slot-scope="text, record">
             <span style="font-weight: bold;">{{ text }}</span>
@@ -233,6 +216,14 @@
             <span style="font-weight: bold;">￥{{ record.stprice }} </span>
             <span style="font-size: 12px; text-decoration: line-through;">￥{{ text }} </span>
           </span>
+          <span slot="syncGoods" slot-scope="text, record">
+            <a-icon
+              type="sync"
+              :style="{ color: '#108ee9', cursor: 'pointer' }"
+              :spin="record.syncing"
+              @click="handleSyncGoods(record, pText)"
+            />
+          </span>
         </a-table>
       </s-table>
     </a-card>
@@ -242,7 +233,8 @@
 <script>
 import moment from 'moment'
 import { STable, Ellipsis } from '@/components'
-import { queryBox, syncBox, syncAll, collect, collectList, getGoodsList, createPurchase } from '@/api/sync'
+import { queryBox, syncBox, syncAll, collect, collectList, getGoodsList, createPurchase, syncCollectGoods } from '@/api/sync'
+import { LEVEL_COLORS, WEAR_TAG_COLORS } from '@/utils/csgo'
 
 const columns = [
   { title: '箱子名称', dataIndex: 'boxName', scopedSlots: { customRender: 'boxName' } },
@@ -269,6 +261,8 @@ export default {
   data () {
     this.columns = columns
     return {
+      levelColors: LEVEL_COLORS,
+      wearTagColors: WEAR_TAG_COLORS,
       visible: false,
       pageSize: 20,
       totalCount: 0,
@@ -316,7 +310,8 @@ export default {
         { title: '最大磨损', dataIndex: 'maximumWear', scopedSlots: { customRender: 'maxWear' } },
         { title: 'BUFF价格', dataIndex: 'buffPrice', scopedSlots: { customRender: 'buffPrice' }, sorter: (a, b) => a.buffPrice - b.buffPrice },
         { title: 'STEAM价格', dataIndex: 'steamPrice', scopedSlots: { customRender: 'steamPrice' }, sorter: (a, b) => a.stprice - b.stprice },
-        { title: '最低价格', dataIndex: 'minPrice', scopedSlots: { customRender: 'mPrice' }, sorter: (a, b) => a.minPrice - b.minPrice }
+        { title: '最低价格', dataIndex: 'minPrice', scopedSlots: { customRender: 'mPrice' }, sorter: (a, b) => a.minPrice - b.minPrice },
+        { title: '同步', dataIndex: 'sync', scopedSlots: { customRender: 'syncGoods' } }
       ],
       innerLoading: false,
       // 查询参数
@@ -398,6 +393,20 @@ export default {
       }).finally(() => {
         this.innerLoading = false
         this.expandedRowKeys.push(record.id)
+      })
+    },
+    // 同步单条汇总商品价格，完成后刷新展开行数据
+    handleSyncGoods (record, parentRecord) {
+      this.$set(record, 'syncing', true)
+      syncCollectGoods(record.id).then(() => {
+        return getGoodsList({ collectId: parentRecord.id, minPrice: this.queryParam.minPrice })
+      }).then(res => {
+        res.forEach(item => {
+          item.rowSpan = res.filter(i => i.goodsName === item.goodsName).length
+        })
+        this.$set(parentRecord, 'innerData', res)
+      }).finally(() => {
+        this.$set(record, 'syncing', false)
       })
     },
     handleSorter (pagination, filters, sorter, { currentDataSource }) {

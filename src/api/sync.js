@@ -92,3 +92,14 @@ export function createPurchase (collectBoxId) {
     method: 'post'
   })
 }
+
+/**
+ * 同步单条汇总商品价格
+ * @param collectGoodsId cs_collect_goods.id
+ */
+export function syncCollectGoods (collectGoodsId) {
+  return request({
+    url: `${api.collect}/goods/sync/${collectGoodsId}`,
+    method: 'get'
+  })
+}

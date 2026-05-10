@@ -78,14 +78,7 @@
         :expandRowByClick="true"
       >
         <span slot="levelName" slot-scope="text, record">
-          <a-badge
-              :color="record.level === 1 ? '#b0c3d9' :
-                record.level === 2 ? '#5e98d9' :
-                record.level === 3 ? '#4b69ff' :
-                record.level === 4 ? '#8847ff' :
-                record.level === 5 ? '#d32ce6' :
-                record.level === 6 ? '#eb4b4b' : '#e4ae39'"
-          ></a-badge>{{ text }}
+          <a-badge :color="levelColors[record.level] || '#e4ae39'"></a-badge>{{ text }}
         </span>
         <span slot="typeName" slot-scope="text, record">
           <template v-if="record.type === 2">⭐️</template>
@@ -95,12 +88,7 @@
           <span style="color: #2db7f5;" v-else>===|</span>
         </span>
         <span slot="wearTypeName" slot-scope="text, record">
-          <a-tag
-              :color="record.wearType === 1 ? 'cyan' :
-                          record.wearType === 2 ? 'green' :
-                          record.wearType === 3 ? 'orange' :
-                          record.wearType === 4 ? 'pink' : 'red'"
-          >{{ text }}</a-tag>
+          <a-tag :color="wearTagColors[record.wearType]">{{ text }}</a-tag>
         </span>
         <span slot="price" slot-scope="text, record">
           <span style="color: #87d068; font-weight: bold; margin-right: 8px;">
@@ -147,10 +135,7 @@
                   <a-col :span="12">
                     <a-tag color="purple">{{ goods.goodsName }} 【{{ goods.minWear }} - {{ goods.maxWear }}】</a-tag>
                     <a-tag
-                        :color="goods.wearType === 1 ? 'cyan' :
-                        goods.wearType === 2 ? 'green' :
-                        goods.wearType === 3 ? 'orange' :
-                        goods.wearType === 4 ? 'pink' : 'red'"
+                        :color="wearTagColors[goods.wearType]"
                     >{{ goods.wearTypeName }} | {{ goods.wear }} 【{{ goods.realWear }}】</a-tag>
                   </a-col>
                   <a-col :span="6">
@@ -195,14 +180,7 @@
 <script>
 import { STable, Ellipsis } from '@/components'
 import { purchaseList, findGoodsWear, del, updatePurchase } from '@/api/purchase'
-
-const wearType = [
-  { code: 1, name: '崭新出厂', minWear: 0, maxWear: 0.07, color: 'cyan' },
-  { code: 2, name: '略有磨损', minWear: 0.07, maxWear: 0.15, color: 'green' },
-  { code: 3, name: '久经沙场', minWear: 0.15, maxWear: 0.38, color: 'orange' },
-  { code: 4, name: '破损不堪', minWear: 0.38, maxWear: 0.45, color: 'pink' },
-  { code: 5, name: '战痕累累', minWear: 0.45, maxWear: 1, color: 'red' }
-]
+import { WEAR_TYPES, LEVEL_COLORS, WEAR_TAG_COLORS, getWearType, calcRealWear } from '@/utils/csgo'
 
 export default {
   name: 'PurchaseList',
@@ -212,7 +190,9 @@ export default {
   },
   data () {
     return {
-      wearType,
+      wearType: WEAR_TYPES,
+      levelColors: LEVEL_COLORS,
+      wearTagColors: WEAR_TAG_COLORS,
       pageSize: 20,
       totalCount: 0,
       columns: [
@@ -262,8 +242,8 @@ export default {
     },
     changeWear (record, e) {
       record.wear = e
-      record.realWear = 1 / (record.maxWear - record.minWear) * (record.wear - record.minWear)
-      const wt = this.wearType.find(item => item.minWear <= record.wear && record.wear < item.maxWear)
+      record.realWear = calcRealWear(record.wear, record.minWear, record.maxWear)
+      const wt = getWearType(record.wear)
       record.wearType = wt.code
       record.wearTypeName = wt.name
     },

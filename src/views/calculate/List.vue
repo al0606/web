@@ -23,14 +23,7 @@
         <a-statistic title="商品类型" :value="rule.goodsTypeName" />
         <a-statistic title="商品等级" :style="{ margin: '0 32px' }">
           <template slot="formatter">
-            <span
-                :style="{ color: rule.goodsLevel === 1 ? '#b0c3d9' :
-                rule.goodsLevel === 2 ? '#5e98d9' :
-                rule.goodsLevel === 3 ? '#4b69ff' :
-                rule.goodsLevel === 4 ? '#8847ff' :
-                rule.goodsLevel === 5 ? '#d32ce6' :
-                rule.goodsLevel === 6 ? '#eb4b4b' : '#e4ae39' }"
-            >{{ rule.goodsLevelName }}</span>
+            <span :style="{ color: levelColors[rule.goodsLevel] || '#e4ae39' }">{{ rule.goodsLevelName }}</span>
           </template>
         </a-statistic>
         <a-statistic title="默认磨损" suffix="%" :value="rule.defaultWear * 100" />
@@ -56,23 +49,6 @@
                 </a-select>
               </a-form-item>
             </a-col>
-<!--            <template v-if="advanced">-->
-<!--              <a-col :md="6" :sm="24">-->
-<!--                <a-form-item label="箱子名称">-->
-<!--                  <a-input v-model="queryParam.boxName" placeholder=""/>-->
-<!--                </a-form-item>-->
-<!--              </a-col>-->
-<!--            </template>-->
-<!--            <a-col :md="!advanced && 6 || 24" :sm="24">-->
-<!--              <span class="table-page-search-submitButtons" :style="advanced && { float: 'right', overflow: 'hidden' } || {} ">-->
-<!--                <a-button type="primary" @click="$refs.table.refresh(true)">查询</a-button>-->
-<!--                <a-button style="margin-left: 8px" @click="() => this.queryParam = {}">重置</a-button>-->
-<!--                <a @click="toggleAdvanced" style="margin-left: 8px">-->
-<!--                  {{ advanced ? '收起' : '展开' }}-->
-<!--                  <a-icon :type="advanced ? 'up' : 'down'"/>-->
-<!--                </a>-->
-<!--              </span>-->
-<!--            </a-col>-->
           </a-row>
         </a-form>
         <a-alert :showIcon="true" style="margin: 10px 0">
@@ -102,6 +78,7 @@
           :loading="loading"
           :showAlertInfo="true"
           :expandRowByClick="true"
+          :scroll="{  x: true }"
       >
         <span slot="costPrice" slot-scope="text">
           ￥{{ text }}
@@ -147,20 +124,15 @@
                   <a-row>
                     <a-col :span="12">
                       <a-tag color="blue">{{ item.boxName }}</a-tag>
-                      <a-tag
-                          :color="item.wearType === 1 ? 'cyan' :
-                      item.wearType === 2 ? 'green' :
-                      item.wearType === 3 ? 'orange' :
-                      item.wearType === 4 ? 'pink' : 'red'"
-                      >{{ item.wearTypeName }} | {{ item.defaultWear }}</a-tag>
+                      <a-tag :color="wearTagColors[item.wearType]">{{ item.wearTypeName }} | {{ item.defaultWear }}</a-tag>
                       <a-tag>X{{ item.count }} </a-tag>
                       <a-tag color="#108ee9">X{{ item.price }}</a-tag>
                     </a-col>
                     <a-col :span="5">
                       <a-slider
                           :value="item.defaultWear"
-                          :min="wearType[item.wearType - 1].minWear"
-                          :max="wearType[item.wearType - 1].maxWear"
+                          :min="0"
+                          :max="1"
                           :step="0.0001"
                           @change="changeDefaultWear(pText, item, $event)"
                       />
@@ -169,8 +141,8 @@
                       <a-input-number
                           @change="changeDefaultWear(pText, item, $event)"
                           :value="item.defaultWear"
-                          :min="wearType[item.wearType - 1].minWear"
-                          :max="wearType[item.wearType - 1].maxWear"
+                          :min="0"
+                          :max="1"
                           :step="0.0001"
                       />
                     </a-col>
@@ -188,23 +160,13 @@
                   <a-row>
                     <a-col :span="12">
                     <a-tag color="purple">{{ goods.goodsName }} 【{{ goods.minWear }} - {{ goods.maxWear }}】</a-tag>
-                    <a-tag
-                        :color="goods.wearType === 1 ? 'cyan' :
-                        goods.wearType === 2 ? 'green' :
-                        goods.wearType === 3 ? 'orange' :
-                        goods.wearType === 4 ? 'pink' : 'red'"
-                    >{{ goods.wearTypeName }} | {{ goods.defaultWear }}</a-tag>
+                    <a-tag :color="wearTagColors[goods.wearType]">{{ goods.wearTypeName }} | {{ goods.defaultWear }}</a-tag>
                     <a-tag :color="goods.minPrice > item.price ? '#f50' : '#87d068'">{{ goods.minPrice }} </a-tag>
                     </a-col>
                     <a-col :span="12">
                       <template v-if="goods.changeDefaultWear && goods.defaultWear !== goods.changeDefaultWear">
                         ====>
-                        <a-tag
-                            :color="goods.changeWearType === 1 ? 'cyan' :
-                            goods.changeWearType === 2 ? 'green' :
-                            goods.changeWearType === 3 ? 'orange' :
-                            goods.changeWearType === 4 ? 'pink' : 'red'"
-                        >{{ goods.changeWearTypeName }} | {{ goods.changeDefaultWear }}</a-tag>
+                        <a-tag :color="wearTagColors[goods.changeWearType]">{{ goods.changeWearTypeName }} | {{ goods.changeDefaultWear }}</a-tag>
                       </template>
                       <template v-if="goods.changeWearType && goods.wearType !== goods.changeWearType">
                         <a-tag
@@ -242,12 +204,7 @@
                     <template>
                       <a-tag color="blue">{{ item.boxName }}</a-tag>
                       <a-tag color="purple">{{ item.goodsName }} 【{{ item.minWear }} - {{ item.maxWear }}】</a-tag>
-                      <a-tag
-                          :color="item.wearType === 1 ? 'cyan' :
-                          item.wearType === 2 ? 'green' :
-                          item.wearType === 3 ? 'orange' :
-                          item.wearType === 4 ? 'pink' : 'red'"
-                      >{{ item.wearTypeName }} | {{ item.wear }}</a-tag>
+                      <a-tag :color="wearTagColors[item.wearType]">{{ item.wearTypeName }} | {{ item.wear }}</a-tag>
                       <a-tag :color="item.price > pText.costPrice ? '#87d068' : '#f50'">{{ item.price }} </a-tag>
                       <a-tag color="#2db7f5">{{ item.rate * 100 }}%</a-tag>
                       <br/>
@@ -256,12 +213,7 @@
                   <a-col :span="8">
                     <template v-if="item.changeWear && item.wear !== item.changeWear">
                         ====>
-                        <a-tag
-                            :color="item.changeWearType === 1 ? 'cyan' :
-                            item.changeWearType === 2 ? 'green' :
-                            item.changeWearType === 3 ? 'orange' :
-                        item.changeWearType === 4 ? 'pink' : 'red'"
-                        >{{ item.changeWearTypeName }} | {{ item.changeWear }}</a-tag>
+                        <a-tag :color="wearTagColors[item.changeWearType]">{{ item.changeWearTypeName }} | {{ item.changeWear }}</a-tag>
                     </template>
                     <template v-if="item.changeWearType && item.wearType !== item.changeWearType">
                       <a-tag
@@ -298,26 +250,19 @@
 import { STable } from '@/components'
 import { getEnable, contractList, calculate, getPrice, collect, delBatchContract } from '@/api/calculate'
 import RuleList from '@/views/calculate/modules/RuleList.vue'
-
-const wearType = [
-  { code: 1, name: '崭新出厂', minWear: 0, maxWear: 0.07, color: 'cyan' },
-  { code: 2, name: '略有磨损', minWear: 0.07, maxWear: 0.15, color: 'green' },
-  { code: 3, name: '久经沙场', minWear: 0.15, maxWear: 0.38, color: 'orange' },
-  { code: 4, name: '破损不堪', minWear: 0.38, maxWear: 0.45, color: 'pink' },
-  { code: 5, name: '战痕累累', minWear: 0.45, maxWear: 1, color: 'red' }
-]
+import { WEAR_TYPES, LEVEL_COLORS, WEAR_TAG_COLORS } from '@/utils/csgo'
 
 export default {
   name: 'CalculateList',
   components: { STable, RuleList },
   data () {
     return {
-      wearType,
+      wearType: WEAR_TYPES,
+      levelColors: LEVEL_COLORS,
+      wearTagColors: WEAR_TAG_COLORS,
       pageSize: 20,
       totalCount: 0,
       loading: false,
-      advanced: false,
-      visible: false,
       activeKey: [],
       rule: {},
       columns: [
@@ -327,11 +272,15 @@ export default {
         { title: '盈利概率', dataIndex: 'rate', scopedSlots: { customRender: 'rate' }, sorter: (a, b) => a.rate - b.rate },
         { title: '最大亏损', dataIndex: 'maximumLoss', scopedSlots: { customRender: 'maximumLoss' }, sorter: (a, b) => a.maximumLoss - b.maximumLoss },
         { title: '最大盈利', dataIndex: 'maximumProfit', scopedSlots: { customRender: 'maximumProfit' }, sorter: (a, b) => a.maximumProfit - b.maximumProfit },
+        { title: '偏度', dataIndex: 'skewness', sorter: (a, b) => a.skewness - b.skewness },
+        { title: '夏普比率', dataIndex: 'sharpeRatio', sorter: (a, b) => a.sharpeRatio - b.sharpeRatio },
+        { title: '上行倍数', dataIndex: 'upward', sorter: (a, b) => a.upward - b.upward },
         { title: '平均磨损', dataIndex: 'avgWear', scopedSlots: { customRender: 'avgWear' }, sorter: (a, b) => a.avgWear - b.avgWear },
         {
           title: '操作',
           dataIndex: 'action',
           width: '100px',
+          fixed: 'right',
           scopedSlots: { customRender: 'action' }
         }
       ],
@@ -400,8 +349,8 @@ export default {
       record.collectGoodsVos.forEach(goodsVo => {
         // 相对默认磨损值 = 合约商品默认磨损值 * (最大磨损值 - 最小磨损值) + 最小磨损值
         goodsVo.changeDefaultWear = record.defaultWear * (goodsVo.maxWear - goodsVo.minWear) + goodsVo.minWear
-        goodsVo.changeWearType = wearType.findIndex(item => item.minWear < goodsVo.changeDefaultWear && goodsVo.changeDefaultWear <= item.maxWear) + 1
-        goodsVo.changeWearTypeName = wearType[goodsVo.changeWearType - 1].name
+        goodsVo.changeWearType = this.wearType.findIndex(item => item.minWear < goodsVo.changeDefaultWear && goodsVo.changeDefaultWear <= item.maxWear) + 1
+        goodsVo.changeWearTypeName = this.wearType[goodsVo.changeWearType - 1].name
         if (goodsVo.changeWearType !== goodsVo.wearType) {
           this.handleGetPrice(goodsVo, 'changeMinPrice')
           this.$forceUpdate()
@@ -412,8 +361,8 @@ export default {
       pText.changeCostPrice = pText.materialsVos.reduce((acc, cur) => acc + cur.changeMinPrice * cur.count, 0)
       pText.resultVos.forEach(resultVo => {
         resultVo.changeWear = pText.totalWear / 10 * (resultVo.maxWear - resultVo.minWear) + resultVo.minWear
-        resultVo.changeWearType = wearType.findIndex(item => item.minWear < resultVo.changeWear && resultVo.changeWear <= item.maxWear) + 1
-        resultVo.changeWearTypeName = wearType[resultVo.changeWearType - 1].name
+        resultVo.changeWearType = this.wearType.findIndex(item => item.minWear < resultVo.changeWear && resultVo.changeWear <= item.maxWear) + 1
+        resultVo.changeWearTypeName = this.wearType[resultVo.changeWearType - 1].name
         if (resultVo.changeWearType !== resultVo.wearType) {
           this.handleGetPrice(resultVo, 'changePrice')
           this.$forceUpdate()

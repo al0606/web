@@ -60,6 +60,14 @@
                   </a-select>
                 </a-form-item>
               </a-col>
+              <a-col :md="6" :sm="24">
+                <a-form-item label="是否消耗">
+                  <a-select v-model="queryParam.handling" placeholder="请选择" default-value="1" allowClear>
+                    <a-select-option :value="0">否</a-select-option>
+                    <a-select-option :value="1">是</a-select-option>
+                  </a-select>
+                </a-form-item>
+              </a-col>
             </template>
             <a-col :md="!advanced && 6 || 24" :sm="24">
               <span class="table-page-search-submitButtons" :style="advanced && { float: 'right', overflow: 'hidden' } || {} ">
@@ -76,19 +84,14 @@
       </div>
 
       <div class="table-operator">
-        <div class="table-operator">
-          <a-button type="primary" icon="plus" @click="$refs.warehouseForm.open()">新建</a-button>
-          <a-popconfirm
-              title="是否确认删除"
-              @confirm="handleDelete()"
-          >
-            <a-button v-if="selectedRowKeys.length > 0" type="danger" icon="minus">批量删除</a-button>
-          </a-popconfirm>
-          <a-button v-if="selectedRowKeys.length > 0" type="primary" icon="clock-circle" @click="handleConsume">批量消耗</a-button>
-          <a-input-search style="width: 300px;" v-if="selectedRowKeys.length > 0" placeholder="请输入备注" @search="handleRemark">
-            <a-button slot="enterButton" type="primary" icon="form">批量备注</a-button>
-          </a-input-search>
-        </div>
+        <a-button type="primary" icon="plus" @click="$refs.warehouseForm.open()">新建</a-button>
+        <a-popconfirm v-if="selectedRowKeys.length > 0" title="是否确认删除" @confirm="handleDelete()">
+          <a-button type="danger" icon="minus" style="margin-left: 8px">批量删除</a-button>
+        </a-popconfirm>
+        <a-button v-if="selectedRowKeys.length > 0" type="primary" icon="clock-circle" style="margin-left: 8px" @click="handleConsume">批量消耗</a-button>
+        <a-input-search v-if="selectedRowKeys.length > 0" style="width: 300px; margin-left: 8px" placeholder="请输入备注" @search="handleRemark">
+          <a-button slot="enterButton" type="primary" icon="form">批量备注</a-button>
+        </a-input-search>
       </div>
 
       <s-table
@@ -108,14 +111,7 @@
           <a-tag color="purple">{{ record.goodsName }} 【{{ record.minWear }} - {{ record.maxWear }}】</a-tag>
         </span>
         <span slot="levelName" slot-scope="text, record">
-          <a-badge
-              :color="record.level === 1 ? '#b0c3d9' :
-                record.level === 2 ? '#5e98d9' :
-                record.level === 3 ? '#4b69ff' :
-                record.level === 4 ? '#8847ff' :
-                record.level === 5 ? '#d32ce6' :
-                record.level === 6 ? '#eb4b4b' : '#e4ae39'"
-          ></a-badge>{{ text }}
+          <a-badge :color="levelColors[record.level] || '#e4ae39'"></a-badge>{{ text }}
         </span>
         <span slot="typeName" slot-scope="text, record">
           <template v-if="record.type === 2">⭐️</template>
@@ -125,12 +121,7 @@
           <span style="color: #2db7f5;" v-else>===|</span>
         </span>
         <span slot="wearTypeName" slot-scope="text, record">
-          <a-tag
-              :color="record.wearType === 1 ? 'cyan' :
-                          record.wearType === 2 ? 'green' :
-                          record.wearType === 3 ? 'orange' :
-                          record.wearType === 4 ? 'pink' : 'red'"
-          >{{ text }}</a-tag>
+          <a-tag :color="wearTagColors[record.wearType]">{{ text }}</a-tag>
         </span>
         <span slot="price" slot-scope="text, record">
           <span style="color: #87d068; font-weight: bold; margin-right: 8px;">
@@ -186,14 +177,7 @@
 import { STable, Ellipsis } from '@/components'
 import WarehouseForm from '@/views/warehouse/modules/WarehouseForm.vue'
 import { warehouseList, delBatchWarehouse, saveWarehouse, updateBatchRemark, updateBatchHandlingTime } from '@/api/warehouse'
-
-const wearType = [
-  { code: 1, name: '崭新出厂', minWear: 0, maxWear: 0.07, color: 'cyan' },
-  { code: 2, name: '略有磨损', minWear: 0.07, maxWear: 0.15, color: 'green' },
-  { code: 3, name: '久经沙场', minWear: 0.15, maxWear: 0.38, color: 'orange' },
-  { code: 4, name: '破损不堪', minWear: 0.38, maxWear: 0.45, color: 'pink' },
-  { code: 5, name: '战痕累累', minWear: 0.45, maxWear: 1, color: 'red' }
-]
+import { WEAR_TYPES, LEVEL_COLORS, WEAR_TAG_COLORS, getWearType } from '@/utils/csgo'
 
 export default {
   name: 'WarehouseList',
@@ -204,7 +188,9 @@ export default {
   },
   data () {
     return {
-      wearType,
+      wearType: WEAR_TYPES,
+      levelColors: LEVEL_COLORS,
+      wearTagColors: WEAR_TAG_COLORS,
       pageSize: 100,
       totalCount: 0,
       columns: [
@@ -223,7 +209,9 @@ export default {
       // 高级搜索 展开/关闭
       advanced: false,
       // 查询参数
-      queryParam: {},
+      queryParam: {
+        handling: 0
+      },
       // 加载数据方法 必须为 Promise 对象
       loadData: parameter => this.doLoadData(parameter),
       selectedRowKeys: [],
@@ -264,7 +252,7 @@ export default {
     changeWear (record, e) {
       record.wear = e
       record.realWear = 1 / (record.maxWear - record.minWear) * (record.wear - record.minWear)
-      const wt = this.wearType.find(item => item.minWear <= record.wear && record.wear < item.maxWear)
+      const wt = getWearType(record.wear)
       record.wearType = wt.code
       record.wearTypeName = wt.name
     },

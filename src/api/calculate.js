@@ -138,7 +138,7 @@ export function collect (parameter) {
 export function delBatchContract (parameter) {
   return request({
     url: `${api.contract}/delete/batch`,
-    method: 'delete',
-    params: parameter
+    method: 'post',
+    data: parameter
   })
 }

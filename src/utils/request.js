@@ -60,7 +60,12 @@ request.interceptors.request.use(config => {
 
 // response interceptor
 request.interceptors.response.use((response) => {
-  return response.data
+  const res = response.data
+  if (res.code !== undefined && res.code !== 200) {
+    notification.error({ message: '请求失败', description: res.message || '服务器错误' })
+    return Promise.reject(new Error(res.message))
+  }
+  return res.data !== undefined ? res.data : res
 }, errorHandler)
 
 const installer = {
